@@ -1,0 +1,8 @@
+*data/*
+*runs/*
+*/runs/*
+*/__pycache__/*
+*.idea/*
+*.pt
+*.jpg
+*.pkl
