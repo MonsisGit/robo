@@ -36,9 +36,3 @@ class MLP(nn.Module):
         return x
 
 
-class Losses:
-    def __init__(self):
-        pass
-
-    def ce_loss(self, pred, target):
-        return F.cross_entropy(pred, target, reduction='mean')
