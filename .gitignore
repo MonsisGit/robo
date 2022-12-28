@@ -4,6 +4,9 @@
 *.idea/*
 *.pt
 *.jpg
+*.png
 *.pkl
 *.npz
 *.h5
+*.zip
+data/src_images/*

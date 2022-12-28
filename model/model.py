@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import torch
 from torch import nn
@@ -16,6 +17,13 @@ def get_yolo_model(model_type: str = 'yolov5l') -> torch.nn.Module:
     model.classes = [41]  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
     max_det = 1000  # maximum number of detections per image
     amp = False  # Automatic Mixed Precision (AMP) inference
+    return model
+
+
+def load_mlp(model_path: pathlib.Path,
+             input_dim: int, hidden_dim: int, output_dim: int, num_layers: int) -> torch.nn.Module:
+    model = MLP(input_dim, hidden_dim, output_dim, num_layers)
+    model.load_state_dict(torch.load(model_path))
     return model
 
 
@@ -39,5 +47,3 @@ class MLP(nn.Module):
             else:
                 x = layer(x)
         return x
-
-

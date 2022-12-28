@@ -29,6 +29,9 @@ class ImgDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
+        return self.get_item(index)
+
+    def get_item(self, index):
         _d = Image.fromarray(np.uint8(self.data[index] * 255)).convert('RGB')
         _t = self.target[index, ...]
         return [_d, _t]
@@ -39,22 +42,33 @@ class PoisitonsDataset(Dataset):
     def __init__(self, data_path: pathlib.Path,
                  only_xyc: bool = False):
         self.data_path = data_path
-        self.data, self.target, self.used_inds = self.load_data()
+        self.data, self.target = self.load_data()
         self.only_xyc = only_xyc
 
     def load_data(self):
         with open(self.data_path, "rb") as fp:  # Unpickling
             pos, confs, targets, used_inds = pickle.load(fp)
-            for i in range(len(pos)):
-                tmp = np.concatenate((pos[i], confs[i].reshape((-1, 1))), axis=1)
-                pos[i] = np.pad(tmp, ((0, 10 - int(np.min((tmp.shape[0], 10)))), (0, 0)), 'constant', constant_values=0)
 
-            return pos, torch.tensor(targets), used_inds
+        return self.concat_transform(pos, confs, targets)
+
+    def concat_transform(self, pos, confs, targets, overwrite_class=False):
+        for i in range(len(pos)):
+            tmp = np.concatenate((pos[i], confs[i].reshape((-1, 1))), axis=1)
+            pos[i] = np.pad(tmp, ((0, 10 - int(np.min((tmp.shape[0], 10)))), (0, 0)), 'constant', constant_values=0)
+
+        if overwrite_class:
+            self.data = pos
+            self.target = torch.tensor(targets)
+
+        return pos, torch.tensor(targets)
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
+        return self.get_item(index)
+
+    def get_item(self, index):
         _d = self.data[index]
         if self.only_xyc:
             _d = np.concatenate((_d[:, 0:2], _d[:, 4].reshape(-1, 1)), axis=1)
@@ -71,7 +85,7 @@ def collate_pos(batch):
     return [torch.tensor(data), torch.vstack(target).float()]
 
 
-def my_collate(batch):
+def collate_img(batch):
     data = [item[0] for item in batch]
     target = [item[1] for item in batch]
     return [data, target]
