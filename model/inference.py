@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-import os
+import random
 from tqdm import tqdm
 import pathlib
 import logging
@@ -27,6 +27,7 @@ def inference():
 
     model = get_yolo_model()
     pos, tars, confs, used_inds = [], [], [], []
+    pos_test, tars_test, confs_test, used_inds_test = [], [], [], []
     for batch in tqdm(eval_loader):
         outputs = model(batch[0])
         for i in range(len(outputs)):
@@ -36,13 +37,23 @@ def inference():
 
             if xywh.shape[0] != 0:
                 nm_cups = np.sum(batch[1][i], dtype=int)
-                pos.append((xywh / 512)[0:nm_cups, :])
-                tars.append(batch[1][i])
-                confs.append(confidences[0:nm_cups])
-                used_inds.append(i)
 
-    with open("data/extracted_pos.pkl", "wb") as fp:  # Pickling
+                if random.random() > 0.1:
+                    pos.append((xywh / 512)[0:nm_cups, :])
+                    confs.append(confidences[0:nm_cups])
+                    tars.append(batch[1][i])
+                    used_inds.append(i)
+                else:
+                    pos_test.append((xywh / 512)[0:nm_cups, :])
+                    tars_test.append(batch[1][i])
+                    confs_test.append(confidences[0:nm_cups])
+                    used_inds_test.append(i)
+
+    with open("data/pos_train.pkl", "wb") as fp:  # Pickling
         pickle.dump([pos, confs, tars, used_inds], fp)
+
+    with open("data/pos_test.pkl", "wb") as fp:
+        pickle.dump([pos_test, confs_test, tars_test, used_inds_test], fp)
 
 
 if __name__ == '__main__':

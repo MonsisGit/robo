@@ -36,9 +36,11 @@ class ImgDataset(Dataset):
 
 class PoisitonsDataset(Dataset):
 
-    def __init__(self, data_path="data/extracted_pos.pkl"):
+    def __init__(self, data_path: pathlib.Path,
+                 only_xyc: bool = False):
         self.data_path = data_path
         self.data, self.target, self.used_inds = self.load_data()
+        self.only_xyc = only_xyc
 
     def load_data(self):
         with open(self.data_path, "rb") as fp:  # Unpickling
@@ -54,9 +56,19 @@ class PoisitonsDataset(Dataset):
 
     def __getitem__(self, index):
         _d = self.data[index]
+        if self.only_xyc:
+            _d = np.concatenate((_d[:, 0:2], _d[:, 4].reshape(-1, 1)), axis=1)
+
+        _d + np.random.normal(0, 0.01, _d.shape[0] * _d.shape[1]).reshape(_d.shape)
         _t = self.target[index, ...]
         # _i = self.used_inds[index]
         return [_d, _t]
+
+
+def collate_pos(batch):
+    data = [item[0].flatten() for item in batch]
+    target = [item[1] for item in batch]
+    return [torch.tensor(data), torch.vstack(target).float()]
 
 
 def my_collate(batch):

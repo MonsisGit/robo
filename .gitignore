@@ -1,4 +1,3 @@
-*data/*
 *runs/*
 */runs/*
 */__pycache__/*
@@ -6,3 +5,5 @@
 *.pt
 *.jpg
 *.pkl
+*.npz
+*.h5
