@@ -51,12 +51,12 @@ class PoisitonsDataset(Dataset):
 
         return self.concat_transform(pos, confs, targets)
 
-    def concat_transform(self, pos, confs, targets, overwrite_class=False):
+    def concat_transform(self, pos, confs, targets, overwrite_class_attributes=False):
         for i in range(len(pos)):
             tmp = np.concatenate((pos[i], confs[i].reshape((-1, 1))), axis=1)
             pos[i] = np.pad(tmp, ((0, 10 - int(np.min((tmp.shape[0], 10)))), (0, 0)), 'constant', constant_values=0)
 
-        if overwrite_class:
+        if overwrite_class_attributes:
             self.data = pos
             self.target = torch.tensor(targets)
 
@@ -68,14 +68,16 @@ class PoisitonsDataset(Dataset):
     def __getitem__(self, index):
         return self.get_item(index)
 
-    def get_item(self, index):
+    def get_item(self, index, with_target=True):
         _d = self.data[index]
         if self.only_xyc:
             _d = np.concatenate((_d[:, 0:2], _d[:, 4].reshape(-1, 1)), axis=1)
 
         _d + np.random.normal(0, 0.01, _d.shape[0] * _d.shape[1]).reshape(_d.shape)
-        _t = self.target[index, ...]
-        # _i = self.used_inds[index]
+        if with_target:
+            _t = self.target[index, ...]
+        else:
+            _t = None
         return [_d, _t]
 
 

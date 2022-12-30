@@ -15,17 +15,19 @@ from model import get_yolo_model
 def post_process_yolo(outputs, batch, out: list) -> list:
     pos, tars, confs = out
     for i in range(len(outputs)):
-        xywh = outputs.xywh[i][:, :4].cpu().numpy()
+        _xywh = outputs.xywh[i][:, :4].cpu().numpy()
         confidences = outputs.xywh[i][:, 4].cpu().numpy()
         # outputs.show()
 
         if xywh.shape[0] != 0:
-            nm_cups = np.sum(batch[1][i], dtype=int)
+            if batch is None:
+                nm_cups = 20
+            else:
+                nm_cups = np.sum(batch[1][i], dtype=int)
+                tars.append(batch[1][i])
 
-            pos.append((xywh / 512)[0:nm_cups, :])
+            pos.append((_xywh / 512)[0:nm_cups, :])
             confs.append(confidences[0:nm_cups])
-            tars.append(batch[1][i])
-            # used_inds.append(i)
 
     return [pos, tars, confs]
 
