@@ -1,17 +1,19 @@
 import os
 import pathlib
+import logging
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 
+logger = logging.getLogger(__name__)
 
 # Model
 def get_yolo_model(model_type: str = 'yolov5l') -> torch.nn.Module:
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     model = torch.hub.load('ultralytics/yolov5', model_type, pretrained=True)
     model.conf = 0.4  # NMS confidence threshold
-    model.iou = 0.35  # NMS IoU threshold
+    model.iou = 0.30  # NMS IoU threshold
     agnostic = False  # NMS class-agnostic
     multi_label = False  # NMS multiple labels per box
     model.classes = [41]  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
@@ -23,6 +25,7 @@ def get_yolo_model(model_type: str = 'yolov5l') -> torch.nn.Module:
 def load_mlp(model_path: pathlib.Path,
              input_dim: int, hidden_dim: int, output_dim: int, num_layers: int) -> torch.nn.Module:
     model = MLP(input_dim, hidden_dim, output_dim, num_layers)
+    logger.info(f'Loading model from {model_path}')
     model.load_state_dict(torch.load(model_path))
     return model
 

@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 from torchmetrics.classification import BinaryAccuracy
 
-from model import MLP
+from models import MLP
 from dataloaders import collate_pos, PoisitonsDataset
 
 logger = logging.getLogger(__name__)

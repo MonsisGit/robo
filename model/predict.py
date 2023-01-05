@@ -3,15 +3,10 @@ import pathlib
 import numpy as np
 from PIL import Image, ImageDraw
 import torch
-from torch import nn
-from torch import optim
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import StepLR
-from torchmetrics.classification import BinaryAccuracy
+from typing import Union
 
-from model import load_mlp, get_yolo_model
-from dataloaders import ImgDataset, collate_img, PoisitonsDataset, collate_pos
-from yolo_inference import post_process_yolo
+from model.models import load_mlp, get_yolo_model
+from model.dataloaders import ImgDataset, PoisitonsDataset
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s.%(msecs)03d:%(levelname)s:%(name)s - %(message)s",
@@ -49,8 +44,11 @@ class CupPredictor:
 
         return self.image
 
-    def predict(self, image: pathlib.Path) -> list:
-        image = self.load_image(image)
+    def predict(self, image ) -> list:
+        if type(image) == pathlib.Path:
+            image = self.load_image(image)
+        else:
+            image = Image.fromarray(image)
         with torch.no_grad():
             pos, tars, confs = self._get_yolo_preds(image)
             cup_pos = self._get_mlp_preds(pos, tars, confs)
@@ -58,7 +56,8 @@ class CupPredictor:
         if self.verbose:
             img = ImageDraw.Draw(self.image)
             img.text((0, 0), str(np.round(cup_pos, 3)), align="center", fill ="red")
-            self.image.show()
+            self.image.save("img.jpg")
+        #return [int(c>0.5) for c in cup_pos]
         return cup_pos
 
     def _get_mlp_preds(self, pos, tars, confs):
@@ -97,6 +96,7 @@ class CupPredictor:
 
 
 if __name__ == '__main__':
+
     cup_predictor = CupPredictor(model_path=pathlib.Path('data/models/MLP.pth'),
                                  mlp_dims={'input_dim': 30,
                                            'hidden_dim': 30,

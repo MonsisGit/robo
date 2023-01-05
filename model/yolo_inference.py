@@ -9,7 +9,7 @@ import pickle
 from torch.utils.data import DataLoader
 
 from dataloaders import ImgDataset, collate_img
-from model import get_yolo_model
+from models import get_yolo_model
 
 
 def post_process_yolo(outputs, batch, out: list) -> list:
