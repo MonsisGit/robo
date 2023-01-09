@@ -8,26 +8,28 @@ logger = logging.getLogger(__name__)
 
 class RobotController:
     def __init__(self, DIR_PINS: dict = {"MOTOR_Z": 20, "MOTOR_X": 26},
-                 STEP_PINS: dict = {"MOTOR_Z": 21, "MOTOR_X": 19},
+                 PUL_PINS: dict = {"MOTOR_Z": 21, "MOTOR_X": 19},
                  END_STOP_PINS: dict = {"MOTOR_Z": 0, "MOTOR_X": 0},
+                 ENABLE_PINS: dict = {"MOTOR_Z": 0, "MOTOR_X": 13},
                  MICROSTEP_RES_PINS: tuple = (14, 15, 18),
                  RELAY_PIN: int = 6,
                  ENDSTOP_PIN: int = 22):
 
         self.DIR_PINS = DIR_PINS
-        self.STEP_PINS = STEP_PINS
+        self.PUL_PINS = PUL_PINS
         self.MICROSTEP_RES_PINS = MICROSTEP_RES_PINS
         self.RELAY_PIN = RELAY_PIN
         self.ENDSTOP_PIN = ENDSTOP_PIN
         self.END_STOP_PINS = END_STOP_PINS
+        self.ENABLE_PINS = END_STOP_PINS
         self.relay_state = None
         self.MOTORS = dict()
         self.initialize_controller()
 
     def initialize_controller(self):
-        for key in self.STEP_PINS.keys():
+        for key in self.PUL_PINS.keys():
             self.MOTORS[key] = RpiMotorLib.A4988Nema(
-                self.DIR_PINS[key], self.STEP_PINS[key], self.MICROSTEP_RES_PINS, "DRV8825")
+                self.DIR_PINS[key], self.PUL_PINS[key], self.MICROSTEP_RES_PINS, "DRV8825")
             logger.info(f'Initialized {key}')
 
         GPIO.setmode(GPIO.BCM)
@@ -45,12 +47,12 @@ class RobotController:
 
     def run_motor(self, motor: str, clockwise: bool = False, steptype: str = 'Full',
                   steps: int = 100, step_delay: float = 0.005):
-        GPIO.output(self.RELAY_PIN, GPIO.HIGH)
+        GPIO.output(self.ENABLE_PINS[motor], GPIO.LOW)
 
         self.MOTORS[motor].motor_go(clockwise=clockwise, steptype=steptype,
                                     steps=steps, stepdelay=step_delay, verbose=False, initdelay=.05)
 
-        GPIO.output(self.RELAY_PIN, GPIO.LOW)
+        GPIO.output(self.ENABLE_PINS[motor], GPIO.HIGH)
 
     def home_all(self):
         for motor, END_STOP_PIN in self.END_STOP_PINS.items():
